@@ -1,0 +1,31 @@
+/* Shared layout of the forms on the signed-out pages. */
+.auth-form {
+  display: grid;
+  gap: var(--space-4);
+}
+.auth-form__aside {
+  justify-self: start;
+  font-size: var(--font-size-sm);
+}
+.auth-form__text {
+  margin: 0;
+}
+.auth-form__muted {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+.auth-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.auth-form__actions {
+  display: grid;
+  gap: var(--space-2);
+}
+@media (max-width: 480px) {
+  .auth-form__row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+release/
+coverage/
+.turbo/
+.env
+*.log
+.superpowers/
+.claude/
+.claude-flow/
+e2e/test-results/
+e2e/playwright-report/

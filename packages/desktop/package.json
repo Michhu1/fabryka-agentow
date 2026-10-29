@@ -1,0 +1,19 @@
+{
+  "name": "@app/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "moj-n8n desktop app",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json && electron .",
+    "dist": "tsc -p tsconfig.build.json && electron-builder --win --config electron-builder.yml",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "electron": "^45.0.0",
+    "electron-builder": "^26.18.0"
+  }
+}

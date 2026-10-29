@@ -1,0 +1,33 @@
+{
+  "name": "moj-n8n",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:int": "turbo run test:int",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "typecheck": "turbo run typecheck && tsc -p e2e",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "infra:up": "docker compose -f docker/docker-compose.yml up -d --wait",
+    "infra:down": "docker compose -f docker/docker-compose.yml down",
+    "infra:logs": "docker compose -f docker/docker-compose.yml logs -f"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.3",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "otpauth": "^9.5.2",
+    "turbo": "^2.11.10",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,97 @@
+name: moj-n8n
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: moj_n8n
+      POSTGRES_USER: moj_n8n
+      POSTGRES_PASSWORD: moj_n8n
+    ports: ["127.0.0.1:5433:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moj_n8n -d moj_n8n"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:6380:6379"]
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  s3:
+    image: chrislusf/seaweedfs:latest
+    command: server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json -ip.bind=0.0.0.0
+    ports: ["127.0.0.1:9000:8333"]
+    volumes:
+      - s3_data:/data
+      - ./s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  s3-init:
+    image: amazon/aws-cli:latest
+    depends_on:
+      s3: { condition: service_healthy }
+    environment:
+      AWS_ACCESS_KEY_ID: devaccesskey
+      AWS_SECRET_ACCESS_KEY: devsecretkey
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+        aws --endpoint-url http://s3:8333 s3api head-bucket --bucket moj-n8n 2>/dev/null && break;
+        aws --endpoint-url http://s3:8333 s3api create-bucket --bucket moj-n8n && break;
+        sleep 2; done;
+        aws --endpoint-url http://s3:8333 s3api head-bucket --bucket moj-n8n && echo bucket moj-n8n ready
+    restart: "no"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Whole app in one container (same image as in the cloud). Start with: --profile app
+  app:
+    profiles: [app]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file: [../.env]
+    environment:
+      # Local compose uses the published dev secrets, so it must not claim production.
+      # In the cloud the image runs with NODE_ENV=production (Dockerfile default) and real secrets.
+      NODE_ENV: development
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: "5432"
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://s3:8333
+      SMTP_HOST: mailpit
+      # Links in emails must point to where this profile serves the app (not the Vite dev port from .env).
+      EDITOR_BASE_URL: http://localhost:5680
+    ports: ["127.0.0.1:5680:5680"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      s3-init: { condition: service_completed_successfully }
+
+volumes:
+  postgres_data:
+  redis_data:
+  s3_data:
