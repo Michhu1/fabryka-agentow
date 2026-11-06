@@ -1,4 +1,4 @@
-# Fabryka Agentów (working name: moj-n8n)
+# Fabryka Agentów (working name: Fabryka Agentów)
 
 **An open-source platform for building workflow automations and AI agents, made for small and medium businesses in Poland.**
 
